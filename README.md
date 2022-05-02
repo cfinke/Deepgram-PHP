@@ -1,1 +1,1 @@
-An official PHP SDK for Deepgram's API.
+An unofficial PHP SDK for Deepgram's API.
