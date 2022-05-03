@@ -322,4 +322,65 @@ class Deepgram_Project {
 
 		return true;
 	}
+
+	/**
+	 * Retrieve the keys associated with this project.
+	 *
+	 * @endpoint GET /projects/{project_id}/keys
+	 * @return array[Deepgram_Key]|Deepgram_Error Either an array of Deepgram_Key objects or a Deepgram_Error on failure.
+	 */
+	public function keys() {
+		$rv = $this->deepgram->get( "/projects/" . urlencode( $this->project_id ) . "/keys" );
+
+		if ( is_a( $rv, 'Deepgram_Error' ) ) {
+			return $rv;
+		}
+
+		$keys = array();
+
+		foreach ( $rv->api_keys as $key_json ) {
+			// @todo There's also a member member here.
+			$key = new Deepgram_Key( $key_json->api_key, $this );
+			$keys[] = $key;
+		}
+
+		return $keys;
+	}
+
+	/**
+	 * Retrieve the keys associated with this project.
+	 *
+	 * @endpoint GET /projects/{project_id}/keys/{key_id}
+	 * @return Deepgram_Key|Deepgram_Error Either a Deepgram_Key or a Deepgram_Error on failure.
+	 */
+	public function key( $key_id ) {
+		$rv = $this->deepgram->get( "/projects/" . urlencode( $this->project_id ) . "/keys/" . urlencode( $key_id ) );
+
+		if ( is_a( $rv, 'Deepgram_Error' ) ) {
+			return $rv;
+		}
+
+		return new Deepgram_Key( $rv->api_key, $this );
+	}
+}
+
+/**
+ * A representation of a Deepgram key.
+ */
+class Deepgram_Key {
+	public $api_key_id;
+	public $comment;
+	public $scopes = array();
+	public $created;
+
+	private $project;
+
+	public function __construct( $data, $project ) {
+		$this->api_key_id = $data->api_key_id;
+		$this->comment = $data->comment;
+		$this->scopes = $data->scopes;
+		$this->created = $data->created;
+
+		$this->project = $project;
+	}
 }
