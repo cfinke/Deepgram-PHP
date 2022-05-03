@@ -1,4 +1,4 @@
-An unofficial PHP SDK for Deepgram's API.
+An unofficial PHP SDK for [Deepgram's audio transcription API](https://developers.deepgram.com/api-reference/).
 
 Getting Started
 ---------------
