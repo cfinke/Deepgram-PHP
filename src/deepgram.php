@@ -12,13 +12,12 @@ class Deepgram {
 	}
 
 	/**
-	 * Make a request to the Deepgram API.
+	 * Make a GET request to the Deepgram API.
 	 *
 	 * @param string $endpoint The endpoint to request.
-	 * @param string $method The HTTP method to use.
 	 * @return mixed|Deepgram_Error Either decoded JSON or a Deepgram_Error on error.
 	 */
-	private function request( $endpoint, $method = "GET" ) {
+	public function get( $endpoint ) {
 		$version = "https://api.deepgram.com/v1";
 
 		$ch = curl_init();
@@ -56,13 +55,66 @@ class Deepgram {
 	}
 
 	/**
+	 * Make a PATCH request to the Deepgram API.
+	 *
+	 * @param string $endpoint The endpoint to request.
+	 * @param array[string] $args An array of arguments to send in the request body.
+	 * @return mixed|Deepgram_Error Either decoded JSON or a Deepgram_Error on error.
+	 */
+	public function patch( $endpoint, $args ) {
+		$version = "https://api.deepgram.com/v1";
+
+		$ch = curl_init();
+
+		curl_setopt( $ch, CURLOPT_URL, $version . $endpoint );
+		curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
+		curl_setopt( $ch, CURLOPT_FOLLOWLOCATION, true );
+
+		curl_setopt( $ch, CURLOPT_HTTPHEADER, array(
+			"Authorization: Token " . $this->api_key,
+			"Content-Type: application/json",
+		) );
+
+		curl_setopt( $ch, CURLOPT_CUSTOMREQUEST, 'PATCH' );
+		curl_setopt( $ch, CURLOPT_POSTFIELDS, json_encode( $args ) );
+
+		$response = curl_exec( $ch );
+
+		$curl_error = curl_errno( $ch );
+
+		if ( 0 !== $curl_error ) {
+			return new Deepgram_Error( 4, "cURL error: " . $curl_error );
+		}
+
+		$response_code = curl_getinfo( $ch, CURLINFO_RESPONSE_CODE );
+
+		curl_close( $ch );
+
+		if ( 200 !== $response_code ) {
+			return new Deepgram_Error( 5, "Response status was not 200 (" . $response_code . ")", $response );
+		}
+
+		if ( ! $response ) {
+			return new Deepgram_Error( 6, "Request response was blank." );
+		}
+
+		$json = json_decode( $response );
+
+		if ( ! $json ) {
+			return new Deepgram_Error( 7, "Response was not valid JSON.", $response );
+		}
+
+		return $json;
+	}
+
+	/**
 	 * Returns a list of projects that the supplied API key has access to.
 	 *
-	 * @endpoint /projects
+	 * @endpoint GET /projects
 	 * @return array[Deepgram_Project]|Deepgram_Error Either an array of Deepgram_Project objects or Deepgram_Error on failure.
 	 */
 	public function projects() {
-		$rv = $this->request( "/projects" );
+		$rv = $this->get( "/projects" );
 
 		if ( is_a( $rv, 'Deepgram_Error' ) ) {
 			return $rv;
@@ -71,7 +123,7 @@ class Deepgram {
 		$projects = array();
 
 		foreach ( $rv->projects as $project_json ) {
-			$project = new Deepgram_Project( $project_json, $this->api_key );
+			$project = new Deepgram_Project( $project_json, $this );
 			$projects[] = $project;
 		}
 
@@ -81,19 +133,19 @@ class Deepgram {
 	/**
 	 * Retrieves basic information about the specified project.
 	 *
-	 * @endpoint /project/{project_id}
+	 * @endpoint GET /project/{project_id}
 	 *
 	 * @param string $project_id The project ID.
 	 * @return Deepgram_Project|Deepgram_Error Either a Deepgram_Project or Deepgram_Error on failure.
 	 */
 	public function project( $project_id ) {
-		$rv = $this->request( "/projects/" . urlencode( $project_id ) );
+		$rv = $this->get( "/projects/" . urlencode( $project_id ) );
 
 		if ( is_a( $rv, 'Deepgram_Error' ) ) {
 			return $rv;
 		}
 
-		$project = new Deepgram_Project( $rv, $this->api_key );
+		$project = new Deepgram_Project( $rv, $this );
 
 		return $project;
 	}
@@ -127,13 +179,54 @@ class Deepgram_Error {
 class Deepgram_Project {
 	public $project_id;
 	public $name;
+	public $company;
 
-	private $api_key;
+	private $deepgram;
 
-	public function __construct( $data, $api_key ) {
+	public function __construct( $data, $deepgram ) {
 		$this->project_id = $data->project_id;
 		$this->name = $data->name;
+		$this->company = $data->company ?? '';
 
-		$this->api_key = $api_key;
+		$this->deepgram = $deepgram;
+	}
+
+	/**
+	 * Update the project metadata.
+	 *
+	 * @endpoint PATCH /projects/{project_id} 
+	 * @param array[string] $data An associative array of fields to update.
+	 *             ['name'] The project name.
+	 *             ['company'] The company associated with the project.
+	 * @return bool|Deepgram_Error Either true on success or a Deepgram_Error on faillure.
+	 */
+	public function update( $data ) {
+		$args = array();
+
+		$arg_whitelist = array( 'name', 'company' );
+
+		foreach ( $arg_whitelist as $arg_key ) {
+			if ( isset( $data[ $arg_key ] ) ) {
+				$args[ $arg_key ] = $data[ $arg_key ];
+			}
+		}
+
+		// @todo Should an unsupported arg trigger an error?
+
+		if ( empty( $args ) ) {
+			return true;
+		}
+
+		$rv = $this->deepgram->patch( '/projects/' . urlencode( $this->project_id ), $args );
+
+		if ( is_a( $rv, 'Deepgram_Error' ) ) {
+			return $rv;
+		}
+
+		foreach ( $args as $key => $val ) {
+			$this->{ $key } = $val;
+		}
+
+		return true;
 	}
 }

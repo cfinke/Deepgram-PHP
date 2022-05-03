@@ -39,6 +39,7 @@ Supported Endpoints
 -------------------
 
 ```
-GET /projects              => $deepgram->projects()
-GET /projects/{project_id} => $deepgram->project( {project_id} )
+GET   /projects              => Deepgram::projects()
+GET   /projects/{project_id} => Deepgram::project()
+PATCH /projects/{project_id} => Deepgram_Project::update()
 ```
