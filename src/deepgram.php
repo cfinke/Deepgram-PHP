@@ -33,22 +33,32 @@ class Deepgram {
 
 		$response = curl_exec( $ch );
 
+		$response_code = curl_getinfo( $ch, CURLINFO_RESPONSE_CODE );
+
 		$curl_error = curl_errno( $ch );
 
 		if ( 0 !== $curl_error ) {
-			return new Deepgram_Error( 1, "cURL error: " . $curl_error );
+			return new Deepgram_Error( 'GET_CURL_ERROR', "cURL error: " . $curl_error );
 		}
 
 		curl_close( $ch );
 
 		if ( ! $response ) {
-			return new Deepgram_Error( 2, "Request response was blank." );
+			return new Deepgram_Error( 'GET_RESPONSE_BLANK', "Request response was blank." );
 		}
 
 		$json = json_decode( $response );
 
 		if ( ! $json ) {
-			return new Deepgram_Error( 3, "Response was not valid JSON.", $response );
+			return new Deepgram_Error( 'GET_RESPONSE_INVALID', "Response was not valid JSON.", $response );
+		}
+
+		if ( isset( $json->err_code ) ) {
+			return new Deepgram_Error( $json->err_code, $json->err_msg );
+		}
+
+		if ( isset( $json->error ) ) {
+			return new Deepgram_Error( $json->error, $json->reason );
 		}
 
 		return $json;
@@ -83,7 +93,7 @@ class Deepgram {
 		$curl_error = curl_errno( $ch );
 
 		if ( 0 !== $curl_error ) {
-			return new Deepgram_Error( 4, "cURL error: " . $curl_error );
+			return new Deepgram_Error( 'PATCH_CURL_ERROR', "cURL error: " . $curl_error );
 		}
 
 		$response_code = curl_getinfo( $ch, CURLINFO_RESPONSE_CODE );
@@ -91,17 +101,84 @@ class Deepgram {
 		curl_close( $ch );
 
 		if ( 200 !== $response_code ) {
-			return new Deepgram_Error( 5, "Response status was not 200 (" . $response_code . ")", $response );
+			return new Deepgram_Error( 'PATCH_REQUEST_FAILED', "Response status was not 200 (" . $response_code . ")", $response );
 		}
 
 		if ( ! $response ) {
-			return new Deepgram_Error( 6, "Request response was blank." );
+			return new Deepgram_Error( 'PATCH_RESPONSE_BLANK', "Request response was blank." );
 		}
 
 		$json = json_decode( $response );
 
 		if ( ! $json ) {
-			return new Deepgram_Error( 7, "Response was not valid JSON.", $response );
+			return new Deepgram_Error( 'PATCH_RESPONSE_INVALID', "Response was not valid JSON.", $response );
+		}
+
+		if ( isset( $json->err_code ) ) {
+			return new Deepgram_Error( $json->err_code, $json->err_msg );
+		}
+
+		if ( isset( $json->error ) ) {
+			return new Deepgram_Error( $json->error, $json->reason );
+		}
+
+		return $json;
+	}
+
+	/**
+	 * Make a DELETE request to the Deepgram API.
+	 *
+	 * @param string $endpoint The endpoint to request.
+	 * @return mixed|Deepgram_Error Either decoded JSON or a Deepgram_Error on error.
+	 */
+	public function delete( $endpoint ) {
+		$version = "https://api.deepgram.com/v1";
+
+		$ch = curl_init();
+
+		curl_setopt( $ch, CURLOPT_URL, $version . $endpoint );
+		curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
+		curl_setopt( $ch, CURLOPT_FOLLOWLOCATION, true );
+
+		curl_setopt( $ch, CURLOPT_HTTPHEADER, array(
+			"Authorization: Token " . $this->api_key,
+			"Content-Type: application/json",
+		) );
+
+		curl_setopt( $ch, CURLOPT_CUSTOMREQUEST, 'DELETE' );
+
+		$response = curl_exec( $ch );
+
+		$curl_error = curl_errno( $ch );
+
+		if ( 0 !== $curl_error ) {
+			return new Deepgram_Error( 'DELETE_CURL_ERROR', "cURL error: " . $curl_error );
+		}
+
+		$response_code = curl_getinfo( $ch, CURLINFO_RESPONSE_CODE );
+
+		curl_close( $ch );
+
+		if ( 200 !== $response_code ) {
+			return new Deepgram_Error( 'DELETE_REQUEST_FAILED', "Response status was not 200 (" . $response_code . ")", $response );
+		}
+
+		if ( ! $response ) {
+			return new Deepgram_Error( 'DELETE_RESPONSE_BLANK', "Request response was blank." );
+		}
+
+		$json = json_decode( $response );
+
+		if ( ! $json ) {
+			return new Deepgram_Error( 'DELETE_RESPONSE_INVALID', "Response was not valid JSON.", $response );
+		}
+
+		if ( isset( $json->err_code ) ) {
+			return new Deepgram_Error( $json->err_code, $json->err_msg );
+		}
+
+		if ( isset( $json->error ) ) {
+			return new Deepgram_Error( $json->error, $json->reason );
 		}
 
 		return $json;
@@ -194,7 +271,7 @@ class Deepgram_Project {
 	/**
 	 * Update the project metadata.
 	 *
-	 * @endpoint PATCH /projects/{project_id} 
+	 * @endpoint PATCH /projects/{project_id}
 	 * @param array[string] $data An associative array of fields to update.
 	 *             ['name'] The project name.
 	 *             ['company'] The company associated with the project.
@@ -225,6 +302,22 @@ class Deepgram_Project {
 
 		foreach ( $args as $key => $val ) {
 			$this->{ $key } = $val;
+		}
+
+		return true;
+	}
+
+	/**
+	 * Delete the project.
+	 *
+	 * @endpoint DELETE /projects/{project_id}
+	 * @return bool|Deepgram_Error Either true on success or a Deepgram_Error on faillure.
+	 */
+	public function delete() {
+		$rv = $this->deepgram->delete( "/projects/" . urlencode( $this->project_id ) );
+
+		if ( is_a( $rv, 'Deepgram_Error' ) ) {
+			return $rv;
 		}
 
 		return true;
