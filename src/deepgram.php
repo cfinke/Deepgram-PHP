@@ -101,6 +101,10 @@ class Deepgram {
 
 /**
  * A simple wrapper for reporting errors.
+ *
+ * You can check $error->code for a unique code that identifies where in this file it was generated.
+ * $error->message should contain a descriptive error messsage, and $error->details may contain
+ * some additional context for the error message.
  */
 class Deepgram_Error {
 	var $code;
