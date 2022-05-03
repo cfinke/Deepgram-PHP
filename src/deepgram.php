@@ -73,8 +73,6 @@ class Deepgram {
 		foreach ( $rv->projects as $project_json ) {
 			$project = new Deepgram_Project( $project_json, $this->api_key );
 			$projects[] = $project;
-			$project = new Deepgram_Project( $project_json, $this->api_key );
-			$projects[] = $project;
 		}
 
 		return $projects;
