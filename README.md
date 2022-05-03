@@ -34,3 +34,11 @@ array(2) {
 ```
 
 (if your API key has two projects).
+
+Supported Endpoints
+-------------------
+
+```
+GET /projects              => $deepgram->projects()
+GET /projects/{project_id} => $deepgram->project( {project_id} )
+```
