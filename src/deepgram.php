@@ -126,6 +126,68 @@ class Deepgram {
 	}
 
 	/**
+	 * Make a POST request to the Deepgram API.
+	 *
+	 * @param string $endpoint The endpoint to request.
+	 * @param array[string] $args An array of arguments to send in the request body.
+	 * @return mixed|Deepgram_Error Either decoded JSON or a Deepgram_Error on error.
+	 */
+	public function post( $endpoint, $args ) {
+		$version = "https://api.deepgram.com/v1";
+
+		$ch = curl_init();
+
+		curl_setopt( $ch, CURLOPT_URL, $version . $endpoint );
+		curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
+		curl_setopt( $ch, CURLOPT_FOLLOWLOCATION, true );
+
+		curl_setopt( $ch, CURLOPT_HTTPHEADER, array(
+			"Authorization: Token " . $this->api_key,
+			"Content-Type: application/json",
+		) );
+
+		curl_setopt( $ch, CURLOPT_POST, 1 );
+		curl_setopt( $ch, CURLOPT_POSTFIELDS, json_encode( $args ) );
+
+		$response = curl_exec( $ch );
+
+		$curl_error = curl_errno( $ch );
+
+		if ( 0 !== $curl_error ) {
+			return new Deepgram_Error( 'POST_CURL_ERROR', "cURL error: " . $curl_error );
+		}
+
+		$response_code = curl_getinfo( $ch, CURLINFO_RESPONSE_CODE );
+
+		curl_close( $ch );
+
+		// @todo The documentation says that the status code should be 201, but it is 200 for now.
+		if ( 200 !== $response_code ) {
+			return new Deepgram_Error( 'POST_REQUEST_FAILED', "Response status was not 200 (" . $response_code . ")", $response );
+		}
+
+		if ( ! $response ) {
+			return new Deepgram_Error( 'POST_RESPONSE_BLANK', "Request response was blank." );
+		}
+
+		$json = json_decode( $response );
+
+		if ( ! $json ) {
+			return new Deepgram_Error( 'POST_RESPONSE_INVALID', "Response was not valid JSON.", $response );
+		}
+
+		if ( isset( $json->err_code ) ) {
+			return new Deepgram_Error( $json->err_code, $json->err_msg );
+		}
+
+		if ( isset( $json->error ) ) {
+			return new Deepgram_Error( $json->error, $json->reason );
+		}
+
+		return $json;
+	}
+
+	/**
 	 * Make a DELETE request to the Deepgram API.
 	 *
 	 * @param string $endpoint The endpoint to request.
@@ -362,6 +424,41 @@ class Deepgram_Project {
 
 		return new Deepgram_Key( $rv->api_key, $this );
 	}
+
+	/**
+	 * Create a new key for this project.
+	 *
+	 * @endpoint POST /projects/{project_id}/keys
+	 * @param array[mixed] The request body parameters.
+	 * @return Deepgram_Key|Deepgram_Error Either a Deepgram_Key or a Deepgram_Error on failure.
+	 */
+	public function create_key( $data = array() ) {
+		$args = array(
+			'comment' => null,
+			'scopes' => array(),
+			'expiration_date' => null,
+			'time_to_live_in_seconds' => null,
+		);
+
+		$args = array_merge( $args, $data );
+		$args = array_filter( $args );
+
+		if ( ! isset( $args['comment'] ) ) {
+			return new Deepgram_Error( 'CREATE_KEY_MISSING_ARG', 'comment argument is requred' );
+		}
+
+		if ( empty( $args['scopes'] ) ) {
+			return new Deepgram_Error( 'CREATE_KEY_MISSING_ARG', 'scopes argument is requred' );
+		}
+
+		$rv = $this->deepgram->post( "/projects/" . urlencode( $this->project_id ) . "/keys", $args );
+
+		if ( is_a( $rv, 'Deepgram_Error' ) ) {
+			return $rv;
+		}
+
+		return new Deepgram_Key( $rv, $this );
+	}
 }
 
 /**
@@ -369,9 +466,11 @@ class Deepgram_Project {
  */
 class Deepgram_Key {
 	public $api_key_id;
+	public $api_key;
 	public $comment;
 	public $scopes = array();
 	public $created;
+	public $expiration_date;
 
 	private $project;
 
@@ -380,6 +479,13 @@ class Deepgram_Key {
 		$this->comment = $data->comment;
 		$this->scopes = $data->scopes;
 		$this->created = $data->created;
+
+		$this->expiration_date = $data->expiration_date;
+
+		// The actual API key is only available immediately after key creation.
+		if ( isset( $data->api_key ) ) {
+			$this->api_key = $data->api_key;
+		}
 
 		$this->project = $project;
 	}
