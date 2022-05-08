@@ -49,4 +49,6 @@ POST   /projects/{project_id}/keys                  => Deepgram_Project::create_
 DELETE /projects/{project_id}/keys/{key_id}         => Deepgram_Key::delete()
 GET    /projects/{project_id}/balances              => Deepgram_Project::balances()
 GET    /projects/{project_id}/balances/{balance_id} => Deepgram_Project::balance()
+GET    /projects/{project_id}requests               => Deepgram_Project::requests()
+GET    /projects/{project_id}requests/{request_id}  => Deepgram_Project::request()
 ```

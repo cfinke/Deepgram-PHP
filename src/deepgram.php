@@ -327,9 +327,11 @@ class Deepgram_Project {
 	public $deepgram;
 
 	public function __construct( $data, $deepgram ) {
-		$this->project_id = $data->project_id;
-		$this->name = $data->name;
-		$this->company = $data->company ?? '';
+		foreach ( $data as $key => $value ) {
+			if ( property_exists( $this, $key ) ) {
+				$this->{ $key } = $value;
+			}
+		}
 
 		$this->deepgram = $deepgram;
 	}
@@ -465,6 +467,62 @@ class Deepgram_Project {
 	}
 
 	/**
+	 * Retrieve project request data.
+	 *
+	 * @endpoint GET /projects/{project_id}/requests
+	 * @param array[mixed] Pagination and filter parameters.
+	 * @return Either an array that includes a 'requests' member, which is itself an array of Deepgram_Request objects, or Deepgram_Error on failure.
+	 */
+	public function requests( $arguments = array() ) {
+		$default_arguments = array(
+			'start' => null,
+			'end' => null,
+			'limit' => null,
+			'status' => null,
+		);
+
+		$arguments = array_merge( $default_arguments, $arguments );
+		$arguments = array_filter( $arguments );
+
+		$query_string = http_build_query( $arguments, '', '&' );
+
+		$rv = $this->deepgram->get( "/projects/" . urlencode( $this->project_id ) . "/requests" . "?" . $query_string );
+
+		if ( is_a( $rv, 'Deepgram_Error' ) ) {
+			return $rv;
+		}
+
+		$requests = array();
+		$requests['limit'] = $rv->limit;
+		$requests['page'] = $rv->page;
+		$requests['requests'] = array();
+
+		foreach ( $rv->requests as $request ) {
+			$request_object = new Deepgram_Request( $request, $this );
+			$requests['requests'][] = $request_object;
+		}
+
+		return $requests;
+	}
+
+	/**
+	 * Retrieve an individual project request.
+	 *
+	 * @endpoint GET /projects/{project_id}/requests/{request_id}
+	 * @param string $request_id The request ID.
+	 * @return Deepgram_Request|Deepgram_Error Either a Deepgram_Request or a Deepgram_Error on failure.
+	 */
+	public function request( $request_id ) {
+		$rv = $this->deepgram->get( "/projects/" . urlencode( $this->project_id ) . "/requests/" . urlencode( $request_id ) );
+
+		if ( is_a( $rv, 'Deepgram_Error' ) ) {
+			return $rv;
+		}
+
+		return new Deepgram_Request( $rv, $this );
+	}
+
+	/**
 	 * Retrieve an individual balance.
 	 *
 	 * @endpoint GET /projects/{project_id}/balances
@@ -511,22 +569,22 @@ class Deepgram_Project {
  */
 class Deepgram_Key {
 	public $api_key_id;
-	public $api_key;
 	public $comment;
 	public $scopes = array();
 	public $created;
 
+	/**
+	 * The actual API key is only available immediately after key creation.
+	 */
+	public $api_key;
+
 	private $project;
 
 	public function __construct( $data, $project ) {
-		$this->api_key_id = $data->api_key_id;
-		$this->comment = $data->comment;
-		$this->scopes = $data->scopes;
-		$this->created = $data->created;
-
-		// The actual API key is only available immediately after key creation.
-		if ( isset( $data->api_key ) ) {
-			$this->api_key = $data->api_key;
+		foreach ( $data as $key => $value ) {
+			if ( property_exists( $this, $key ) ) {
+				$this->{ $key } = $value;
+			}
 		}
 
 		$this->project = $project;
@@ -553,16 +611,43 @@ class Deepgram_Key {
  * A representation of a Deepgram credit balance.
  */
 class Deepgram_Balance {
-	var $balance_id;
-	var $amount;
-	var $units;
-	var $purchase_order_id;
+	public $balance_id;
+	public $amount;
+	public $units;
+	public $purchase_order_id;
+
+	private $project;
 
 	public function __construct( $data, $project ) {
-		$this->balance_id = $data->balance_id;
-		$this->amount = $data->amount;
-		$this->units = $data->units;
-		$this->purchase_order_id = $data->purchase_order_id;
+		foreach ( $data as $key => $value ) {
+			if ( property_exists( $this, $key ) ) {
+				$this->{ $key } = $value;
+			}
+		}
+
+		$this->project = $project;
+	}
+}
+
+/**
+ * A representation of a Deepgram request.
+ */
+class Deepgram_Request {
+	public $request_id;
+	public $created;
+	public $path;
+	public $api_key_id;
+	public $response;
+	public $callback;
+
+	private $project;
+
+	public function __construct( $data, $project ) {
+		foreach ( $data as $key => $value ) {
+			if ( property_exists( $this, $key ) ) {
+				$this->{ $key } = $value;
+			}
+		}
 
 		$this->project = $project;
 	}
