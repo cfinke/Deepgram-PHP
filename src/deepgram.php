@@ -43,6 +43,10 @@ class Deepgram {
 
 		curl_close( $ch );
 
+		if ( 200 !== $response_code ) {
+			return new Deepgram_Error( 'GET_REQUEST_FAILED', "Response status was not 200 (" . $response_code . ")", $response );
+		}
+
 		if ( ! $response ) {
 			return new Deepgram_Error( 'GET_RESPONSE_BLANK', "Request response was blank." );
 		}
