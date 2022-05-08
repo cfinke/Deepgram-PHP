@@ -46,4 +46,5 @@ DELETE /projects/{project_id}               => Deepgram_Project::delete()
 GET    /projects/{project_id}/keys          => Deepgram_Project::keys()
 GET    /projects/{project_id}/keys/{key_id} => Deepgram_Project::key()
 POST   /projects/{project_id}/keys          => Deepgram_Project::create_key()
+DELETE /projects/{project_id}/keys/{key_id} => Deepgram_Key::delete()
 ```

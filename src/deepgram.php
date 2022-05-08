@@ -320,7 +320,7 @@ class Deepgram_Project {
 	public $name;
 	public $company;
 
-	private $deepgram;
+	public $deepgram;
 
 	public function __construct( $data, $deepgram ) {
 		$this->project_id = $data->project_id;
@@ -470,7 +470,6 @@ class Deepgram_Key {
 	public $comment;
 	public $scopes = array();
 	public $created;
-	public $expiration_date;
 
 	private $project;
 
@@ -480,13 +479,27 @@ class Deepgram_Key {
 		$this->scopes = $data->scopes;
 		$this->created = $data->created;
 
-		$this->expiration_date = $data->expiration_date;
-
 		// The actual API key is only available immediately after key creation.
 		if ( isset( $data->api_key ) ) {
 			$this->api_key = $data->api_key;
 		}
 
 		$this->project = $project;
+	}
+
+	/**
+	 * Delete the key.
+	 *
+	 * @endpoint DELETE /projects/{project_id}/keys/{key_id}
+	 * @return bool|Deepgram_Error Either true on success or a Deepgram_Error on faillure.
+	 */
+	public function delete() {
+		$rv = $this->project->deepgram->delete( "/projects/" . urlencode( $this->project->project_id ) . "/keys/" . urlencode( $this->api_key_id ) );
+
+		if ( is_a( $rv, 'Deepgram_Error' ) ) {
+			return $rv;
+		}
+
+		return true;
 	}
 }
