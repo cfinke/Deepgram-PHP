@@ -459,6 +459,47 @@ class Deepgram_Project {
 
 		return new Deepgram_Key( $rv, $this );
 	}
+
+	/**
+	 * Retrieve an individual balance.
+	 *
+	 * @endpoint GET /projects/{project_id}/balances
+	 * @param string $balance_id The balance ID.
+	 * @return array[Deepgram_Balance]|Deepgram_Error Either an array of Deepgram_Balance objects or a Deepgram_Error on failure.
+	 */
+	public function balances() {
+		$rv = $this->deepgram->get( "/projects/" . urlencode( $this->project_id ) . "/balances" );
+
+		if ( is_a( $rv, 'Deepgram_Error' ) ) {
+			return $rv;
+		}
+
+		$balances = array();
+
+		foreach ( $rv->balances as $balance ) {
+			$balance_object = new Deepgram_Balance( $balance, $this );
+			$balances[] = $balance;
+		}
+
+		return $balances;
+	}
+
+	/**
+	 * Retrieve an individual balance.
+	 *
+	 * @endpoint GET /projects/{project_id}/balances
+	 * @param string $balance_id The balance ID.
+	 * @return Deepgram_Balance|Deepgram_Error Either a Deepgram_Balance or a Deepgram_Error on failure.
+	 */
+	public function balance( $balance_id ) {
+		$rv = $this->deepgram->get( "/projects/" . urlencode( $this->project_id ) . "/balances/" . urlencode( $balance_id ) );
+
+		if ( is_a( $rv, 'Deepgram_Error' ) ) {
+			return $rv;
+		}
+
+		return new Deepgram_Balance( $rv, $this );
+	}
 }
 
 /**
@@ -501,5 +542,24 @@ class Deepgram_Key {
 		}
 
 		return true;
+	}
+}
+
+/**
+ * A representation of a Deepgram credit balance.
+ */
+class Deepgram_Balance {
+	var $balance_id;
+	var $amount;
+	var $units;
+	var $purchase_order_id;
+
+	public function __construct( $data, $project ) {
+		$this->balance_id = $data->balance_id;
+		$this->amount = $data->amount;
+		$this->units = $data->units;
+		$this->purchase_order_id = $data->purchase_order_id;
+
+		$this->project = $project;
 	}
 }
