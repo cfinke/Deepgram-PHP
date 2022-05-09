@@ -523,6 +523,50 @@ class Deepgram_Project {
 	}
 
 	/**
+	 * Retrieve a usage summary for the project.
+	 *
+	 * @endpoint /projects/{project_id}/usage
+	 * @param array[mixed] $arguments Query parameters for the API request.
+	 * @return Deepgram_Usage_Summary|Deepgram_Error Either a Deepgram_Usage_Summary or a Deepgram_Error on failure.
+	 */
+	public function usage( $arguments = array() ) {
+		$default_arguments = array(
+			'start' => null,
+			'end' => null,
+			'accessor' => null,
+			'tag' => null,
+			'method' => null,
+			'model' => null,
+			'multichannel' => null,
+			'interim_results' => null,
+			'punctuate' => null,
+			'ner' => null,
+			'utterances' => null,
+			'replace' => null,
+			'profanity_filter' => null,
+			'keywords' => null,
+			'diarize' => null,
+			'search' => null,
+			'redact' => null,
+			'alternatives' => null,
+			'numerals' => null,
+		);
+
+		$arguments = array_merge( $default_arguments, $arguments );
+		$arguments = array_filter( $arguments );
+
+		$query_string = http_build_query( $arguments, '', '&' );
+
+		$rv = $this->deepgram->get( "/projects/" . urlencode( $this->project_id ) . "/usage?" . $query_string );
+
+		if ( is_a( $rv, 'Deepgram_Error' ) ) {
+			return $rv;
+		}
+
+		return new Deepgram_Usage_Summary( $rv, $this );
+	}
+
+	/**
 	 * Retrieve an individual balance.
 	 *
 	 * @endpoint GET /projects/{project_id}/balances
@@ -641,6 +685,23 @@ class Deepgram_Request {
 	public $callback;
 
 	private $project;
+
+	public function __construct( $data, $project ) {
+		foreach ( $data as $key => $value ) {
+			if ( property_exists( $this, $key ) ) {
+				$this->{ $key } = $value;
+			}
+		}
+
+		$this->project = $project;
+	}
+}
+
+class Deepgram_Usage_Summary {
+	public $start;
+	public $end;
+	public $resolution;
+	public $results;
 
 	public function __construct( $data, $project ) {
 		foreach ( $data as $key => $value ) {
