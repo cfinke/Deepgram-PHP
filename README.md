@@ -56,4 +56,5 @@ GET    /projects/{project_id}/usage/fields               => Deepgram_Project::fi
 GET    /projects/{project_id}/members                    => Deepgram_Project::members()
 DELETE /projects/{project_id}/members/{member_id}        => Deepgram_Member::remove()
 GET    /projects/{project_id}/members/{member_id}/scopes => Deepgram_Member::scopes()
+PUT    /projects/{project_id}/members/{member_id}/scopes => Deepgram_Member::scopes()
 ```

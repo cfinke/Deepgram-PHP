@@ -130,6 +130,67 @@ class Deepgram {
 	}
 
 	/**
+	 * Make a PUT request to the Deepgram API.
+	 *
+	 * @param string $endpoint The endpoint to request.
+	 * @param array[string] $args An array of arguments to send in the request body.
+	 * @return mixed|Deepgram_Error Either decoded JSON or a Deepgram_Error on error.
+	 */
+	public function put( $endpoint, $args ) {
+		$version = "https://api.deepgram.com/v1";
+
+		$ch = curl_init();
+
+		curl_setopt( $ch, CURLOPT_URL, $version . $endpoint );
+		curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
+		curl_setopt( $ch, CURLOPT_FOLLOWLOCATION, true );
+
+		curl_setopt( $ch, CURLOPT_HTTPHEADER, array(
+			"Authorization: Token " . $this->api_key,
+			"Content-Type: application/json",
+		) );
+
+		curl_setopt( $ch, CURLOPT_CUSTOMREQUEST, 'PUT' );
+		curl_setopt( $ch, CURLOPT_POSTFIELDS, json_encode( $args ) );
+
+		$response = curl_exec( $ch );
+
+		$curl_error = curl_errno( $ch );
+
+		if ( 0 !== $curl_error ) {
+			return new Deepgram_Error( 'PUT_CURL_ERROR', "cURL error: " . $curl_error );
+		}
+
+		$response_code = curl_getinfo( $ch, CURLINFO_RESPONSE_CODE );
+
+		curl_close( $ch );
+
+		if ( 200 !== $response_code ) {
+			return new Deepgram_Error( 'PUT_REQUEST_FAILED', "Response status was not 200 (" . $response_code . ")", $response );
+		}
+
+		if ( ! $response ) {
+			return new Deepgram_Error( 'PUT_RESPONSE_BLANK', "Request response was blank." );
+		}
+
+		$json = json_decode( $response );
+
+		if ( ! $json ) {
+			return new Deepgram_Error( 'PUT_RESPONSE_INVALID', "Response was not valid JSON.", $response );
+		}
+
+		if ( isset( $json->err_code ) ) {
+			return new Deepgram_Error( $json->err_code, $json->err_msg );
+		}
+
+		if ( isset( $json->error ) ) {
+			return new Deepgram_Error( $json->error, $json->reason );
+		}
+
+		return $json;
+	}
+
+	/**
 	 * Make a POST request to the Deepgram API.
 	 *
 	 * @param string $endpoint The endpoint to request.
@@ -817,6 +878,23 @@ class Deepgram_Member {
 	 */
 	public function scopes() {
 		$rv = $this->project->deepgram->get( "/projects/" . urlencode( $this->project->project_id ) . "/members/" . urlencode( $this->member_id ) . "/scopes" );
+
+		if ( is_a( $rv, 'Deepgram_Error' ) ) {
+			return $rv;
+		}
+
+		return $rv->scopes;
+	}
+
+	/**
+	 * Update the scope assigned to a project member.
+	 *
+	 * @endpoint PUT /projects/{project_id}/members/{member_id}/scopes
+	 * @param string $scope The new scope for the member.
+	 * @return array[string] An array of scopes.
+	 */
+	public function update_scope( $scope ) {
+		$rv = $this->project->deepgram->put( "/projects/" . urlencode( $this->project->project_id ) . "/members/" . urlencode( $this->member_id ) . "/scopes", array( 'scope' => $scope ) );
 
 		if ( is_a( $rv, 'Deepgram_Error' ) ) {
 			return $rv;
