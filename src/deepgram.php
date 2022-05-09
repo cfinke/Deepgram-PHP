@@ -651,7 +651,7 @@ class Deepgram_Project {
 
 		foreach ( $rv->members as $member ) {
 			$member_object = new Deepgram_Member( $member, $this );
-			$members[] = $member;
+			$members[] = $member_object;
 		}
 
 		return $members;
