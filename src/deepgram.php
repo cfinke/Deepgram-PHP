@@ -810,6 +810,22 @@ class Deepgram_Member {
 	}
 
 	/**
+	 * Retrieve the scopes assigned to a project member.
+	 *
+	 * @endpoint GET /projects/{project_id}/members/{member_id}/scopes
+	 * @return array[string] An array of scopes.
+	 */
+	public function scopes() {
+		$rv = $this->project->deepgram->get( "/projects/" . urlencode( $this->project->project_id ) . "/members/" . urlencode( $this->member_id ) . "/scopes" );
+
+		if ( is_a( $rv, 'Deepgram_Error' ) ) {
+			return $rv;
+		}
+
+		return $rv->scopes;
+	}
+
+	/**
 	 * Remove the member from the project. Note that this also deletes API keys created by this member for this project.
 	 *
 	 * @endpoint DELETE /projects/{project_id}/members/{member_id}
