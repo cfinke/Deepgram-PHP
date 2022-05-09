@@ -53,4 +53,6 @@ GET    /projects/{project_id}/requests              => Deepgram_Project::request
 GET    /projects/{project_id}/requests/{request_id} => Deepgram_Project::request()
 GET    /projects/{project_id}/usage                 => Deepgram_Project::usage()
 GET    /projects/{project_id}/usage/fields          => Deepgram_Project::fields()
+GET    /projects/{project_id}/members               => Deepgram_Project::members()
+DELETE /projects/{project_id}/members/{member_id}   => Deepgram_Member::remove()
 ```

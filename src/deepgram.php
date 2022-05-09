@@ -633,6 +633,29 @@ class Deepgram_Project {
 
 		return new Deepgram_Balance( $rv, $this );
 	}
+
+	/**
+	 * Retrieve the members of this project.
+	 *
+	 * @endpoint GET /projects/{project_id}/members
+	 * @return array[Deepgram_Member]|Deepgram_Error Either an array of Deepgram_Members or a Deepgram_Error on failure.
+	 */
+	public function members() {
+		$rv = $this->deepgram->get( "/projects/" . urlencode( $this->project_id ) . "/members" );
+
+		if ( is_a( $rv, 'Deepgram_Error' ) ) {
+			return $rv;
+		}
+
+		$members = array();
+
+		foreach ( $rv->members as $member ) {
+			$member_object = new Deepgram_Member( $member, $this );
+			$members[] = $member;
+		}
+
+		return $members;
+	}
 }
 
 /**
@@ -763,5 +786,42 @@ class Deepgram_Fields {
 		}
 
 		$this->project = $project;
+	}
+}
+
+/**
+ * A Deepgram project member.
+ */
+class Deepgram_Member {
+	public $member_id;
+	public $first_name;
+	public $last_name;
+	public $scopes;
+	public $email;
+
+	public function __construct( $data, $project ) {
+		foreach ( $data as $key => $value ) {
+			if ( property_exists( $this, $key ) ) {
+				$this->{ $key } = $value;
+			}
+		}
+
+		$this->project = $project;
+	}
+
+	/**
+	 * Remove the member from the project. Note that this also deletes API keys created by this member for this project.
+	 *
+	 * @endpoint DELETE /projects/{project_id}/members/{member_id}
+	 * @return bool|Deepgram_Error Either true on success or a Deepgram_Error on faillure.
+	 */
+	public function remove() {
+		$rv = $this->deepgram->delete( "/projects/" . urlencode( $this->project_id ) . "/members/" . urlencode( $this->member_id ) );
+
+		if ( is_a( $rv, 'Deepgram_Error' ) ) {
+			return $rv;
+		}
+
+		return true;
 	}
 }
