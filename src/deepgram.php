@@ -525,7 +525,7 @@ class Deepgram_Project {
 	/**
 	 * Retrieve a usage summary for the project.
 	 *
-	 * @endpoint /projects/{project_id}/usage
+	 * @endpoint GET /projects/{project_id}/usage
 	 * @param array[mixed] $arguments Query parameters for the API request.
 	 * @return Deepgram_Usage_Summary|Deepgram_Error Either a Deepgram_Usage_Summary or a Deepgram_Error on failure.
 	 */
@@ -569,7 +569,7 @@ class Deepgram_Project {
 	/**
 	 * Lists the features, models, tags, languages, and processing method used for requests in the specified project.
 	 *
-	 * @endpoint /projects/{project_id}/usage/fields
+	 * @endpoint GET /projects/{project_id}/usage/fields
 	 * @param array[mixed] $arguments Query parameters for the API request.
 	 * @return Deepgram_Fields|Deepgram_Error Either a Deepgram_Fields or a Deepgram_Error on failure.
 	 */
