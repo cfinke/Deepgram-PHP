@@ -717,6 +717,24 @@ class Deepgram_Project {
 
 		return $members;
 	}
+
+	/**
+	 * Cause the authenticated account to leave this project. This appears to be an alias for calling
+	 * DELETE /projects/{project_id}/members/{member_id} with the authorized account's member ID and so
+	 * it will also delete API Keys created by the account for this project.
+	 *
+	 * @endpoint DELETE /projects/{project_id}/leave
+	 * @return bool|Deepgram_Error Either true on success or a Deepgram_Error on faillure.
+	 */
+	public function leave() {
+		$rv = $this->deepgram->delete( "/projects/" . urlencode( $this->project_id ) . "/leave" );
+
+		if ( is_a( $rv, 'Deepgram_Error' ) ) {
+			return $rv;
+		}
+
+		return true;
+	}
 }
 
 /**
