@@ -52,4 +52,5 @@ GET    /projects/{project_id}/balances/{balance_id} => Deepgram_Project::balance
 GET    /projects/{project_id}/requests              => Deepgram_Project::requests()
 GET    /projects/{project_id}/requests/{request_id} => Deepgram_Project::request()
 GET    /projects/{project_id}/usage                 => Deepgram_Project::usage()
+GET    /projects/{project_id}/usage/fields          => Deepgram_Project::fields()
 ```

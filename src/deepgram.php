@@ -567,6 +567,33 @@ class Deepgram_Project {
 	}
 
 	/**
+	 * Lists the features, models, tags, languages, and processing method used for requests in the specified project.
+	 *
+	 * @endpoint /projects/{project_id}/usage/fields
+	 * @param array[mixed] $arguments Query parameters for the API request.
+	 * @return Deepgram_Fields|Deepgram_Error Either a Deepgram_Fields or a Deepgram_Error on failure.
+	 */
+	public function fields( $arguments = array() ) {
+		$default_arguments = array(
+			'start' => null,
+			'end' => null,
+		);
+
+		$arguments = array_merge( $default_arguments, $arguments );
+		$arguments = array_filter( $arguments );
+
+		$query_string = http_build_query( $arguments, '', '&' );
+
+		$rv = $this->deepgram->get( "/projects/" . urlencode( $this->project_id ) . "/usage/fields?" . $query_string );
+
+		if ( is_a( $rv, 'Deepgram_Error' ) ) {
+			return $rv;
+		}
+
+		return new Deepgram_Fields( $rv, $this );
+	}
+
+	/**
 	 * Retrieve an individual balance.
 	 *
 	 * @endpoint GET /projects/{project_id}/balances
@@ -697,11 +724,36 @@ class Deepgram_Request {
 	}
 }
 
+/**
+ * A representation of a Deepgram usage summary.
+ */
 class Deepgram_Usage_Summary {
 	public $start;
 	public $end;
 	public $resolution;
 	public $results;
+
+	public function __construct( $data, $project ) {
+		foreach ( $data as $key => $value ) {
+			if ( property_exists( $this, $key ) ) {
+				$this->{ $key } = $value;
+			}
+		}
+
+		$this->project = $project;
+	}
+}
+
+
+/**
+ * A representation of Deepgram fields.
+ */
+class Deepgram_Fields {
+	public $tags;
+	public $models;
+	public $processing_methods;
+	public $languages;
+	public $features;
 
 	public function __construct( $data, $project ) {
 		foreach ( $data as $key => $value ) {
