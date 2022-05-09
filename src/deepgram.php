@@ -832,7 +832,7 @@ class Deepgram_Member {
 	 * @return bool|Deepgram_Error Either true on success or a Deepgram_Error on faillure.
 	 */
 	public function remove() {
-		$rv = $this->deepgram->delete( "/projects/" . urlencode( $this->project_id ) . "/members/" . urlencode( $this->member_id ) );
+		$rv = $this->project->deepgram->delete( "/projects/" . urlencode( $this->project->project_id ) . "/members/" . urlencode( $this->member_id ) );
 
 		if ( is_a( $rv, 'Deepgram_Error' ) ) {
 			return $rv;
